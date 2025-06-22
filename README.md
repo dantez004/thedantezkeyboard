@@ -6,7 +6,7 @@ ru:
  
  клавиатуру можно доделать по своему желанию
  
-**путь к .apk файлу**
+**путь к .apk файлу:**
   https://github.com/dantez004/thedantezkeyboard/blob/main/apk/thedantezkeyboard.apk
 
 
@@ -15,7 +15,6 @@ en:
  
   *images from "ru"*
   
-**path to .apk file**
-
-  ![https://github.com/dantez004/thedantezkeyboard/blob/main/apk/thedantezkeyboard.apk]
+**path to .apk file:**
+  https://github.com/dantez004/thedantezkeyboard/blob/main/apk/thedantezkeyboard.apk
   
