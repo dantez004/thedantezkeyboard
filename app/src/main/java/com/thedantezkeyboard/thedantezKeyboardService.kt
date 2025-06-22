@@ -181,7 +181,6 @@ class PCKeyboardService : InputMethodService() {
     }
 
     // Вспомогательная функция для добавления обычной кнопки
-    // Вспомогательная функция для добавления обычной кнопки
     @SuppressLint("ClickableViewAccessibility")
     private fun addKeyToRow(
         row: LinearLayout,
@@ -368,7 +367,6 @@ class PCKeyboardService : InputMethodService() {
         updateInputView()
     }
 
-    // Функции для работы с буфером обмена
     private fun copyText() {
         currentInputConnection?.performContextMenuAction(android.R.id.copy)
     }
@@ -432,7 +430,6 @@ class PCKeyboardService : InputMethodService() {
         return true
     }
 
-    // Добавляем обработчик для кнопки Delete
     private fun handleDelete() {
         val ic = currentInputConnection ?: return
 
@@ -475,36 +472,30 @@ class PCKeyboardService : InputMethodService() {
         resetModifiers()
     }
 
-    // Поиск границ слова перед курсором
     private fun findWordCharsBefore(text: String): Int {
         if (text.isEmpty()) return 0
         var index = text.length - 1
 
-        // Пропускаем пробелы и пунктуацию
         while (index >= 0 && !text[index].isLetterOrDigit()) {
             index--
         }
 
         val end = index
-        // Ищем начало слова
         while (index >= 0 && text[index].isLetterOrDigit()) {
             index--
         }
         return end - index
     }
 
-    // Поиск границ слова после курсора
     private fun findWordCharsAfter(text: String): Int {
         if (text.isEmpty()) return 0
         var index = 0
 
-        // Пропускаем пробелы и пунктуацию
         while (index < text.length && !text[index].isLetterOrDigit()) {
             index++
         }
 
         val start = index
-        // Ищем конец слова
         while (index < text.length && text[index].isLetterOrDigit()) {
             index++
         }
