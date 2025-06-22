@@ -1,3 +1,6 @@
+
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
 ru:
  это клавиатура является гибридом экранной клавиатуры дял телефона и физической 65% клавиатуры для компьютера. Написана преимущественно с помощью deepseek-r1, хотя задумка собственная
  
@@ -18,3 +21,9 @@ en:
 **path to .apk file:**
   https://github.com/dantez004/thedantezkeyboard/blob/main/apk/thedantezkeyboard.apk
   
+
+
+
+## Лицензия (License)
+
+Этот проект распространяется под лицензией MIT. Подробнее см. в файле [LICENSE](LICENSE).
