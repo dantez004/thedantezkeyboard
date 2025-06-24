@@ -10,9 +10,17 @@ ru:
 
 комбинации:
   ctrl + c = скопировать текст
+  
   ctrl + v = ctrl + м = вставить текст
+  
   ctrl + x = ctrl + ч = вырезать текст
+  
   ctrl + a = ctrl + ф = выделить весь текст
+
+  ctrl + bs = удалить слово сзади курсора
+
+  ctrl + del = удалить слово спереди курсора
+  
   alt + t = alt + е = написать "ё"
  
  клавиатуру можно доделать по своему желанию
@@ -28,9 +36,17 @@ en:
 
  combinations:
   ctrl + c = copy text
+  
   ctrl + v = paste text
+  
   ctrl + x = cut text
+  
   ctrl + a = select all text
+
+  ctrl + bs = delete word back cursor
+
+  ctrl + del = delete word forward cursor
+  
   alt + t = write "ё" (for ru lang)
 
   u can resume dev at will
