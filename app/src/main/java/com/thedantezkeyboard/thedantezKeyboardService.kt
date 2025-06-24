@@ -396,6 +396,7 @@ class PCKeyboardService : InputMethodService() {
         } else {
             if (isCtrlPressed) {
                 deleteWordBeforeCursor()
+                resetModifiers()
             } else {
                 ic.deleteSurroundingText(1, 0)
             }
@@ -443,6 +444,7 @@ class PCKeyboardService : InputMethodService() {
         } else {
             if (isCtrlPressed) {
                 deleteWordAfterCursor()
+                resetModifiers()
             } else {
                 ic.deleteSurroundingText(0, 1)
             }
