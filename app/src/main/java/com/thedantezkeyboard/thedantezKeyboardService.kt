@@ -25,7 +25,7 @@ class PCKeyboardService : InputMethodService() {
         override fun run() {
             if (isBackspaceLongPress) {
                 handleBackspace()
-                handler.postDelayed(this, 50)
+                handler.postDelayed(this, 30)
             }
         }
     }
@@ -35,7 +35,7 @@ class PCKeyboardService : InputMethodService() {
         override fun run() {
             if (isDelLongPress) {
                 handleDelete()
-                handler.postDelayed(this, 50)
+                handler.postDelayed(this, 30)
             }
         }
     }
@@ -158,7 +158,7 @@ class PCKeyboardService : InputMethodService() {
             orientation = LinearLayout.HORIZONTAL
             layoutParams = LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT)
         }
-        addModifierButton(row4, "Shift", 1.5f, ::handleShift, isShiftPressed || isCapsLock)
+        addModifierButton(row4, "Sht", 1.5f, ::handleShift, isShiftPressed || isCapsLock)
         listOf("z", "x", "c", "v", "b", "n", "m", ",", ".", "/").forEach { key ->
             addKeyToRow(row4, key, 1f)
         }
@@ -340,6 +340,7 @@ class PCKeyboardService : InputMethodService() {
             isCtrlPressed && key == "x" -> cutText()
             //собственные комбинации | myself combinations
             isCtrlPressed && key == "a" -> selectAllText()
+            isAltPressed && key == "t" -> rulangSendTextYo()
             else -> {
                 val charToSend = getKeyDisplayText(key)
                 sendText(charToSend)
@@ -369,6 +370,10 @@ class PCKeyboardService : InputMethodService() {
 
     private fun copyText() {
         currentInputConnection?.performContextMenuAction(android.R.id.copy)
+    }
+
+    private fun rulangSendTextYo() {
+        if (isShiftPressed) sendText("Ё") else sendText("ё")
     }
 
     private fun pasteText() {
@@ -454,22 +459,69 @@ class PCKeyboardService : InputMethodService() {
     private fun deleteWordBeforeCursor() {
         val ic = currentInputConnection ?: return
         val textBeforeCursor = ic.getTextBeforeCursor(100, 0)?.toString() ?: return
-        val charsToDelete = findWordCharsBefore(textBeforeCursor)
+//      old version:
+//        val charsToDelete = findWordCharsBefore(textBeforeCursor)
+//        if (charsToDelete > 0) {
+//            ic.deleteSurroundingText(charsToDelete, 0)
+//        }
+//        resetModifiers()
+        //new version:
+        if (textBeforeCursor.isEmpty()) return
+
+        //find position for start deleting
+        var startIndex = textBeforeCursor.length - 1
+        var foundNonSpace = false
+
+        //go at cursor to back
+        while (startIndex >= 0) {
+            if (!textBeforeCursor[startIndex].isWhitespace()) {
+                foundNonSpace = true
+            } else if (foundNonSpace) {
+                startIndex++
+                break
+            }
+            startIndex--
+        }
+
+        //if go to start string
+        if (startIndex < 0) startIndex = 0
+
+        val charsToDelete = textBeforeCursor.length - startIndex
         if (charsToDelete > 0) {
             ic.deleteSurroundingText(charsToDelete, 0)
         }
-        resetModifiers()
     }
 
     // Удаление слова после курсора (Ctrl+Delete)
     private fun deleteWordAfterCursor() {
         val ic = currentInputConnection ?: return
         val textAfterCursor = ic.getTextAfterCursor(100, 0)?.toString() ?: return
-        val charsToDelete = findWordCharsAfter(textAfterCursor)
-        if (charsToDelete > 0) {
-            ic.deleteSurroundingText(0, charsToDelete)
+//        old version
+        //        val charsToDelete = findWordCharsAfter(textAfterCursor)
+//        if (charsToDelete > 0) {
+//            ic.deleteSurroundingText(0, charsToDelete)
+//        }
+//        resetModifiers()
+        //new version
+        if (textAfterCursor.isEmpty()) return
+
+        //finding position to end deleting
+        var endIndex = 0
+        var foundNonSpace = false
+
+        //go at cursor to forward
+        while (endIndex < textAfterCursor.length) {
+            if (!textAfterCursor[endIndex].isWhitespace()) {
+                foundNonSpace = true
+            } else if (foundNonSpace) {
+                break
+            }
+            endIndex++
         }
-        resetModifiers()
+
+        if (endIndex > 0) {
+            ic.deleteSurroundingText(0, endIndex)
+        }
     }
 
     private fun findWordCharsBefore(text: String): Int {
