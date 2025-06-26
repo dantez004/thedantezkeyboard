@@ -2,7 +2,6 @@ package com.thedantezkeyboard
 
 import android.annotation.SuppressLint
 import android.graphics.Color
-import android.graphics.drawable.Drawable
 import android.inputmethodservice.InputMethodService
 import android.util.Log
 import android.view.KeyEvent
@@ -16,11 +15,9 @@ import android.view.MotionEvent
 import android.os.Handler
 import android.os.Looper
 import androidx.core.content.ContextCompat
-import kotlin.reflect.typeOf
 
 class PCKeyboardService : InputMethodService() {
-
-    private lateinit var handler: Handler
+    private val handler = Handler(Looper.getMainLooper())
 
     private var isBackspaceLongPress = false
     private var backspaceLongPressWithCtrl = false
@@ -32,7 +29,7 @@ class PCKeyboardService : InputMethodService() {
                 } else {
                     handleBackspace()
                 }
-                    handler.postDelayed(this, 30)
+                handler.postDelayed(this, 30)
             }
         }
     }
@@ -53,15 +50,15 @@ class PCKeyboardService : InputMethodService() {
     }
 
     private val TAG = "KeyboardService"
-    private val buttonBackground by lazy {
-        ContextCompat.getDrawable(this, R.drawable.rounded_button)!!.mutate()
-    }
+
     private var keyboardView: View? = null
 
-//    override fun onDestroy() {
-//        keyboardView = null
-//        super.onDestroy()
-//    }
+    override fun onDestroy() {
+        keyboardView = null
+        handler.removeCallbacks(backspaceRunnable)
+        handler.removeCallbacks(delRunnable)
+        super.onDestroy()
+    }
 
     // Состояния модификаторов
     private var isCtrlPressed = false
@@ -123,21 +120,39 @@ class PCKeyboardService : InputMethodService() {
         "." to "Ю", "/" to ","
     )
 
+    private fun getCurrentLayout(): Map<String, String> {
+        return when {
+            isEnglishLayout && (isShiftPressed || isCapsLock) -> enShiftLayout
+            isEnglishLayout -> enLayout
+            isShiftPressed || isCapsLock -> ruShiftLayout
+            else -> ruLayout
+        }
+    }
+
+    private fun getKeyDisplayText(key: String): String {
+        val layout = when {
+            isEnglishLayout && (isShiftPressed || isCapsLock) -> enShiftLayout
+            isEnglishLayout -> enLayout
+            isShiftPressed || isCapsLock -> ruShiftLayout
+            else -> ruLayout
+        }
+        return layout[key] ?: key
+    }
+
     private fun resetModifiers() {
         if (isCtrlPressed || isAltPressed || isShiftPressed || isCapsLock) {
             isCtrlPressed = false
             isAltPressed = false
             isCapsLock = false
             isShiftPressed = false
-            updateInputView()
+            updateKeyboardState()
         }
     }
 
     override fun onCreateInputView(): View {
-        Log.d(TAG, "onCreateInputView called")
-        handler = Handler(Looper.getMainLooper())
-        keyboardView = createKeyboardView()
-        return keyboardView!!
+        return createKeyboardView().also {
+            keyboardView = it
+        }
     }
 
     override fun onFinishInputView(finishingInput: Boolean) {
@@ -171,7 +186,7 @@ class PCKeyboardService : InputMethodService() {
             addKeyToRow(row2, key, 1f)
         }
 
-        // Ряд 3: a s d f g h j k l ; ' Enter Delete
+        // Ряд 3: a s d f g h j k l ; '
         val row3 = LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL
             layoutParams = LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT)
@@ -190,16 +205,16 @@ class PCKeyboardService : InputMethodService() {
         listOf("z", "x", "c", "v", "b", "n", "m", ",", ".", "/").forEach { key ->
             addKeyToRow(row4, key, 1f)
         }
-        addKeyToRow(row4, if (isEnglishLayout) "EN" else "RU", 1.5f, ::toggleLanguage)
+        addKeyToRow(row4, "LANG", 1.5f, ::toggleLanguage)
 
-        // Ряд 5: Ctrl Space Alt
+        // Ряд 5: Ctrl Space Alt Enter
         val row5 = LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL
             layoutParams = LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT)
         }
-        addModifierButton(row5, "Ctrl", 1.5f, { toggleModifier("Ctrl") }, isCtrlPressed)
+        addModifierButton(row5, "CTRL", 1.5f, { toggleModifier("CTRL") }, isCtrlPressed)
         addKeyToRow(row5, "Space", 4f, { sendText(" ") })
-        addModifierButton(row5, "Alt", 1.5f, { toggleModifier("Alt") }, isAltPressed)
+        addModifierButton(row5, "ALT", 1.5f, { toggleModifier("ALT") }, isAltPressed)
         addKeyToRow(row5, "↵", 1.5f, ::handleEnter, true)
 
         // Добавляем все ряды в основной layout
@@ -218,12 +233,17 @@ class PCKeyboardService : InputMethodService() {
         nonSymbolButton: Boolean = false
     ) {
         val button = Button(this).apply {
+            tag = key
             text = getKeyDisplayText(key)
             layoutParams = LayoutParams(0, 150, weight).apply {
                 setMargins(2, 2, 2, 2)
             }
             background = when {
-                nonSymbolButton -> ContextCompat.getDrawable(context, R.drawable.rounded_button_dkgray)
+                nonSymbolButton -> ContextCompat.getDrawable(
+                    context,
+                    R.drawable.rounded_button_dkgray
+                )
+
                 else -> ContextCompat.getDrawable(context, R.drawable.rounded_button_black)
             }
             setTextColor(Color.WHITE)
@@ -285,6 +305,7 @@ class PCKeyboardService : InputMethodService() {
     ) {
         val button = Button(this).apply {
             this.text = text
+            tag = text
             layoutParams = LayoutParams(0, 150, weight).apply {
                 setMargins(2, 2, 2, 2)
             }
@@ -300,49 +321,61 @@ class PCKeyboardService : InputMethodService() {
         row.addView(button)
     }
 
-    private fun getKeyDisplayText(key: String): String {
-        return when {
-            isEnglishLayout && (isShiftPressed || isCapsLock) -> enShiftLayout[key] ?: key
-            isEnglishLayout -> enLayout[key] ?: key
-            isShiftPressed || isCapsLock -> ruShiftLayout[key] ?: key
-            else -> ruLayout[key] ?: key
-        }
-    }
-
     private fun toggleModifier(modifier: String) {
         when (modifier) {
-            "Ctrl" -> isCtrlPressed = !isCtrlPressed
-            "Alt" -> isAltPressed = !isAltPressed
+            "CTRL" -> isCtrlPressed = !isCtrlPressed
+            "ALT" -> isAltPressed = !isAltPressed
         }
-        updateInputView()
+        updateKeyboardState()
     }
 
     private fun toggleLanguage() {
         isEnglishLayout = !isEnglishLayout
-        updateInputView()
+        updateKeyboardState()
     }
 
-    private fun updateInputView() {
-        keyboardView = createKeyboardView()
-        setInputView(keyboardView)
+    private fun updateKeyboardState() {
+        handler.post {
+            keyboardView?.let { root ->
+                val keysToUpdate = enLayout.keys + ruLayout.keys + setOf("LANG")
+                keysToUpdate.forEach { key ->
+                    // Явное приведение типа к Button
+                    val button = root.findViewWithTag(key) as? Button
+                    button?.text = when (key) {
+                        "LANG" -> if (isEnglishLayout) "EN" else "RU"
+                        else -> getKeyDisplayText(key)
+                    }
+                }
+
+                updateModifierButton(root, "SHIFT", isShiftPressed || isCapsLock)
+                updateModifierButton(root, "CTRL", isCtrlPressed)
+                updateModifierButton(root, "ALT", isAltPressed)
+            }
+        }
+    }
+
+    private fun updateModifierButton(root: View, text: String, isActive: Boolean) {
+        val button = root.findViewWithTag(text) as? Button
+        button?.apply {
+            background = ContextCompat.getDrawable(
+                context,
+                if (isActive) R.drawable.rounded_button_gray
+                else R.drawable.rounded_button_black
+            )
+        }
     }
 
     private fun handleShift() {
         when {
-            isCapsLock -> {
+            isCapsLock && isShiftPressed -> {
                 isCapsLock = false
                 isShiftPressed = false
             }
 
-            isShiftPressed -> {
-                isCapsLock = true
-            }
-
-            else -> {
-                isShiftPressed = true
-            }
+            isShiftPressed -> isCapsLock = true
+            else -> isShiftPressed = true
         }
-        updateInputView()
+        updateKeyboardState() // Используйте актуальную функцию
     }
 
     private fun handleKeyPress(key: String) {
@@ -368,13 +401,20 @@ class PCKeyboardService : InputMethodService() {
         // Снимаем Shift после одного символа, если не включен CapsLock
         if (isShiftPressed && !isCapsLock) {
             isShiftPressed = false
-            updateInputView()
+            updateKeyboardState()
         }
     }
 
+    private fun safeInputConnection(action: (InputConnection) -> Unit) {
+        currentInputConnection?.let(action) ?: run {
+            Log.w(TAG, "InputConnection in null")
+        }
+    }
 
     private fun copyText() {
-        currentInputConnection?.performContextMenuAction(android.R.id.copy)
+        safeInputConnection { ic ->
+            currentInputConnection?.performContextMenuAction(android.R.id.copy)
+        }
     }
 
     private fun rulangSendTextYo() {
@@ -382,15 +422,21 @@ class PCKeyboardService : InputMethodService() {
     }
 
     private fun pasteText() {
-        currentInputConnection?.performContextMenuAction(android.R.id.paste)
+        safeInputConnection { ic ->
+            ic.performContextMenuAction(android.R.id.paste)
+        }
     }
 
     private fun cutText() {
-        currentInputConnection?.performContextMenuAction(android.R.id.cut)
+        safeInputConnection { ic ->
+            ic.performContextMenuAction(android.R.id.cut)
+        }
     }
 
     private fun selectAllText() {
-        currentInputConnection?.performContextMenuAction(android.R.id.selectAll)
+        safeInputConnection { ic ->
+            ic.performContextMenuAction(android.R.id.selectAll)
+        }
     }
 
     private fun handleBackspace() {
@@ -411,8 +457,10 @@ class PCKeyboardService : InputMethodService() {
     }
 
     private fun handleEnter() {
-        currentInputConnection?.sendKeyEvent(KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_ENTER))
-        currentInputConnection?.sendKeyEvent(KeyEvent(KeyEvent.ACTION_UP, KeyEvent.KEYCODE_ENTER))
+        safeInputConnection { ic ->
+            ic.sendKeyEvent(KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_ENTER))
+            ic.sendKeyEvent(KeyEvent(KeyEvent.ACTION_UP, KeyEvent.KEYCODE_ENTER))
+        }
     }
 
     private fun sendText(text: String) {
