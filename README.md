@@ -30,7 +30,7 @@ ru:
  клавиатуру можно доделать по своему желанию
  
 **путь к .apk файлу:**
-  https://github.com/dantez004/thedantezkeyboard/blob/main/apk/thedantezkeyboard.apk
+  [https://github.com/dantez004/thedantezkeyboard/blob/main/apk/thedantezkeyboard.apk](https://github.com/dantez004/thedantezkeyboard/tree/main/apk)
 
 
 en:
@@ -58,7 +58,7 @@ en:
   u can resume dev at will
   
 **path to .apk file:**
-  https://github.com/dantez004/thedantezkeyboard/blob/main/apk/thedantezkeyboard.apk
+  [https://github.com/dantez004/thedantezkeyboard/blob/main/apk/thedantezkeyboard.apk](https://github.com/dantez004/thedantezkeyboard/tree/main/apk)
   
 
 
