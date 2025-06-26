@@ -15,6 +15,7 @@ import android.widget.LinearLayout.LayoutParams
 import android.view.MotionEvent
 import android.os.Handler
 import android.os.Looper
+import androidx.core.content.ContextCompat
 
 class PCKeyboardService : InputMethodService() {
 
@@ -40,8 +41,10 @@ class PCKeyboardService : InputMethodService() {
         }
     }
 
-    private lateinit var inputConnection: InputConnection
     private val TAG = "KeyboardService"
+    private val buttonBackground by lazy {
+        ContextCompat.getDrawable(this, R.drawable.rounded_button)!!.mutate()
+    }
     private var keyboardView: View? = null
 
     // Состояния модификаторов
@@ -107,6 +110,8 @@ class PCKeyboardService : InputMethodService() {
     private fun resetModifiers() {
         isCtrlPressed = false
         isAltPressed = false
+        isCapsLock = false
+        isShiftPressed = false
         updateInputView()
     }
 
@@ -115,6 +120,11 @@ class PCKeyboardService : InputMethodService() {
         handler = Handler(Looper.getMainLooper())
         keyboardView = createKeyboardView()
         return keyboardView!!
+    }
+
+    override fun onFinishInputView(finishingInput: Boolean) {
+        super.onFinishInputView(finishingInput)
+        resetModifiers()
     }
 
     private fun createKeyboardView(): View {
@@ -194,8 +204,7 @@ class PCKeyboardService : InputMethodService() {
             layoutParams = LayoutParams(0, 150, weight).apply {
                 setMargins(2, 2, 2, 2)
             }
-            background = resources.getDrawable(R.drawable.rounded_button, null)
-            background.mutate().setTint(bgColor)
+            background = buttonBackground.constantState?.newDrawable() ?: buttonBackground
             setTextColor(Color.WHITE)
 
             // Обработчик обычного клика
@@ -266,28 +275,6 @@ class PCKeyboardService : InputMethodService() {
         row.addView(button)
     }
 
-    private fun addKeyRow(layout: LinearLayout, keys: List<String>) {
-        val row = LinearLayout(this).apply {
-            orientation = LinearLayout.HORIZONTAL
-            layoutParams = LayoutParams(
-                LayoutParams.MATCH_PARENT,
-                LayoutParams.WRAP_CONTENT
-            )
-        }
-
-        keys.forEach { keyText ->
-            val button = Button(this).apply {
-                text = getKeyDisplayText(keyText)
-                layoutParams = LayoutParams(0, 150, 1f)
-                setBackgroundColor(Color.BLACK)
-                setTextColor(Color.WHITE) //
-                setOnClickListener { handleKeyPress(keyText) }
-            }
-            row.addView(button)
-        }
-        layout.addView(row)
-    }
-
     private fun getKeyDisplayText(key: String): String {
         return when {
             isEnglishLayout && (isShiftPressed || isCapsLock) -> enShiftLayout[key] ?: key
@@ -341,13 +328,15 @@ class PCKeyboardService : InputMethodService() {
             //собственные комбинации | myself combinations
             isCtrlPressed && key == "a" -> selectAllText()
             isAltPressed && key == "t" -> rulangSendTextYo()
+            isCtrlPressed && key == "t" -> sendText("\t")
             else -> {
                 val charToSend = getKeyDisplayText(key)
                 sendText(charToSend)
             }
         }
 
-        if (key != "a" && (isCtrlPressed || isAltPressed)) {
+        //сброс ctrl и alt после комбинации
+        if (isCtrlPressed || isAltPressed) {
             resetModifiers()
         }
 
@@ -358,15 +347,6 @@ class PCKeyboardService : InputMethodService() {
         }
     }
 
-    private fun resetModifiersIfNeeded() {
-        if (isShiftPressed && !isCapsLock) {
-            isShiftPressed = false
-        }
-        if (isCtrlPressed || isAltPressed) {
-            resetModifiers()
-        }
-        updateInputView()
-    }
 
     private fun copyText() {
         currentInputConnection?.performContextMenuAction(android.R.id.copy)
@@ -427,6 +407,7 @@ class PCKeyboardService : InputMethodService() {
     }
 
     override fun onEvaluateInputViewShown(): Boolean {
+        super.onEvaluateInputViewShown()
         Log.d(TAG, "onEvaluateInputViewShown called")
         return true
     }
@@ -460,14 +441,9 @@ class PCKeyboardService : InputMethodService() {
     // Удаление слова перед курсором (Ctrl+Backspace)
     private fun deleteWordBeforeCursor() {
         val ic = currentInputConnection ?: return
-        val textBeforeCursor = ic.getTextBeforeCursor(100, 0)?.toString() ?: return
-//      old version:
-//        val charsToDelete = findWordCharsBefore(textBeforeCursor)
-//        if (charsToDelete > 0) {
-//            ic.deleteSurroundingText(charsToDelete, 0)
-//        }
-//        resetModifiers()
-        //new version:
+        val textBeforeCursor = ic.getTextBeforeCursor(10000, 0)?.toString() ?: return
+        val punctuation = "!\"#$%&'()*+,-./:;<=>?@[\\]^_`{|}~"
+
         if (textBeforeCursor.isEmpty()) return
 
         //find position for start deleting
@@ -476,7 +452,7 @@ class PCKeyboardService : InputMethodService() {
 
         //go at cursor to back
         while (startIndex >= 0) {
-            if (!textBeforeCursor[startIndex].isWhitespace()) {
+            if (!textBeforeCursor[startIndex].isWhitespace() && textBeforeCursor[startIndex] !in punctuation) {
                 foundNonSpace = true
             } else if (foundNonSpace) {
                 startIndex++
@@ -497,14 +473,9 @@ class PCKeyboardService : InputMethodService() {
     // Удаление слова после курсора (Ctrl+Delete)
     private fun deleteWordAfterCursor() {
         val ic = currentInputConnection ?: return
-        val textAfterCursor = ic.getTextAfterCursor(100, 0)?.toString() ?: return
-//        old version
-        //        val charsToDelete = findWordCharsAfter(textAfterCursor)
-//        if (charsToDelete > 0) {
-//            ic.deleteSurroundingText(0, charsToDelete)
-//        }
-//        resetModifiers()
-        //new version
+        val textAfterCursor = ic.getTextAfterCursor(10000, 0)?.toString() ?: return
+        val punctuation = "!\"#$%&'()*+,-./:;<=>?@[\\]^_`{|}~"
+
         if (textAfterCursor.isEmpty()) return
 
         //finding position to end deleting
@@ -513,7 +484,7 @@ class PCKeyboardService : InputMethodService() {
 
         //go at cursor to forward
         while (endIndex < textAfterCursor.length) {
-            if (!textAfterCursor[endIndex].isWhitespace()) {
+            if (!textAfterCursor[endIndex].isWhitespace()  && textAfterCursor[endIndex] !in punctuation) {
                 foundNonSpace = true
             } else if (foundNonSpace) {
                 break
@@ -524,35 +495,5 @@ class PCKeyboardService : InputMethodService() {
         if (endIndex > 0) {
             ic.deleteSurroundingText(0, endIndex)
         }
-    }
-
-    private fun findWordCharsBefore(text: String): Int {
-        if (text.isEmpty()) return 0
-        var index = text.length - 1
-
-        while (index >= 0 && !text[index].isLetterOrDigit()) {
-            index--
-        }
-
-        val end = index
-        while (index >= 0 && text[index].isLetterOrDigit()) {
-            index--
-        }
-        return end - index
-    }
-
-    private fun findWordCharsAfter(text: String): Int {
-        if (text.isEmpty()) return 0
-        var index = 0
-
-        while (index < text.length && !text[index].isLetterOrDigit()) {
-            index++
-        }
-
-        val start = index
-        while (index < text.length && text[index].isLetterOrDigit()) {
-            index++
-        }
-        return index - start
     }
 }

@@ -64,17 +64,17 @@ fun KeyboardSetupScreen() {
             Text("Выбрать клавиатуру")
         }
 
-        Button(
-            onClick = {
-                // Активация клавиатуры
-                val intent = Intent(Settings.ACTION_INPUT_METHOD_SETTINGS)
-                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                context.startActivity(intent)
-            },
-            modifier = Modifier.padding(8.dp)
-        ) {
-            Text("Активировать клавиатуру")
-        }
+//        Button(
+//            onClick = {
+//                // Активация клавиатуры
+//                val intent = Intent(Settings.ACTION_INPUT_METHOD_SETTINGS)
+//                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+//                context.startActivity(intent)
+//            },
+//            modifier = Modifier.padding(8.dp)
+//        ) {
+//            Text("Активировать клавиатуру")
+//        }
 
         Text(
             text = "Инструкция:\n" +
