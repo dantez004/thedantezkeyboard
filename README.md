@@ -24,6 +24,8 @@ ru:
   ctrl + del = удалить слово спереди курсора
   
   alt + t = alt + е = написать "ё"
+
+  ctrl + t = табуляция
  
  клавиатуру можно доделать по своему желанию
  
@@ -50,6 +52,8 @@ en:
   ctrl + del = delete word forward cursor
   
   alt + t = write "ё" (for ru lang)
+
+  ctrl + t = tabulation
 
   u can resume dev at will
   
