@@ -55,8 +55,7 @@ class PCKeyboardService : InputMethodService() {
 
     override fun onDestroy() {
         keyboardView = null
-        handler.removeCallbacks(backspaceRunnable)
-        handler.removeCallbacks(delRunnable)
+        handler.removeCallbacksAndMessages(null)
         super.onDestroy()
     }
 
