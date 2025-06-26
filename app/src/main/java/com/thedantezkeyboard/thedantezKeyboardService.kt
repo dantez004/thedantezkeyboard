@@ -16,26 +16,37 @@ import android.view.MotionEvent
 import android.os.Handler
 import android.os.Looper
 import androidx.core.content.ContextCompat
+import kotlin.reflect.typeOf
 
 class PCKeyboardService : InputMethodService() {
 
     private lateinit var handler: Handler
 
     private var isBackspaceLongPress = false
+    private var backspaceLongPressWithCtrl = false
     private val backspaceRunnable = object : Runnable {
         override fun run() {
             if (isBackspaceLongPress) {
-                handleBackspace()
-                handler.postDelayed(this, 30)
+                if (backspaceLongPressWithCtrl) {
+                    deleteWordBeforeCursor()
+                } else {
+                    handleBackspace()
+                }
+                    handler.postDelayed(this, 30)
             }
         }
     }
 
     private var isDelLongPress = false
+    private var delLongPressWithCtrl = false
     private val delRunnable = object : Runnable {
         override fun run() {
             if (isDelLongPress) {
-                handleDelete()
+                if (delLongPressWithCtrl) {
+                    deleteWordAfterCursor()
+                } else {
+                    handleDelete()
+                }
                 handler.postDelayed(this, 30)
             }
         }
@@ -46,6 +57,11 @@ class PCKeyboardService : InputMethodService() {
         ContextCompat.getDrawable(this, R.drawable.rounded_button)!!.mutate()
     }
     private var keyboardView: View? = null
+
+//    override fun onDestroy() {
+//        keyboardView = null
+//        super.onDestroy()
+//    }
 
     // Состояния модификаторов
     private var isCtrlPressed = false
@@ -108,11 +124,13 @@ class PCKeyboardService : InputMethodService() {
     )
 
     private fun resetModifiers() {
-        isCtrlPressed = false
-        isAltPressed = false
-        isCapsLock = false
-        isShiftPressed = false
-        updateInputView()
+        if (isCtrlPressed || isAltPressed || isShiftPressed || isCapsLock) {
+            isCtrlPressed = false
+            isAltPressed = false
+            isCapsLock = false
+            isShiftPressed = false
+            updateInputView()
+        }
     }
 
     override fun onCreateInputView(): View {
@@ -139,7 +157,7 @@ class PCKeyboardService : InputMethodService() {
             orientation = LinearLayout.HORIZONTAL
             layoutParams = LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT)
         }
-        addKeyToRow(row1, "del", 1.5f, ::handleDelete, Color.rgb(30, 30, 30))
+        addKeyToRow(row1, "DEL", 1.5f, ::handleDelete, true)
         listOf("1", "2", "3", "4", "5", "6", "7", "8", "9", "0", "-", "=").forEach { key ->
             addKeyToRow(row1, key, 1f)
         }
@@ -161,14 +179,14 @@ class PCKeyboardService : InputMethodService() {
         listOf("a", "s", "d", "f", "g", "h", "j", "k", "l", ";", "'").forEach { key ->
             addKeyToRow(row3, key, 1f)
         }
-        addKeyToRow(row3, "bs", 1.5f, ::handleBackspace, Color.rgb(30, 30, 30))
+        addKeyToRow(row3, "BS", 1.5f, ::handleBackspace, true)
 
-        // Ряд 4: z x c v b n m , . / Shift En/Ru
+        // Ряд 4: Shift z x c v b n m , . / En/Ru
         val row4 = LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL
             layoutParams = LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT)
         }
-        addModifierButton(row4, "Sht", 1.5f, ::handleShift, isShiftPressed || isCapsLock)
+        addModifierButton(row4, "SHIFT", 1.5f, ::handleShift, isShiftPressed || isCapsLock)
         listOf("z", "x", "c", "v", "b", "n", "m", ",", ".", "/").forEach { key ->
             addKeyToRow(row4, key, 1f)
         }
@@ -182,7 +200,7 @@ class PCKeyboardService : InputMethodService() {
         addModifierButton(row5, "Ctrl", 1.5f, { toggleModifier("Ctrl") }, isCtrlPressed)
         addKeyToRow(row5, "Space", 4f, { sendText(" ") })
         addModifierButton(row5, "Alt", 1.5f, { toggleModifier("Alt") }, isAltPressed)
-        addKeyToRow(row5, "↵", 1.5f, ::handleEnter, Color.rgb(30, 30, 30))
+        addKeyToRow(row5, "↵", 1.5f, ::handleEnter, true)
 
         // Добавляем все ряды в основной layout
         listOf(row1, row2, row3, row4, row5).forEach { keyboardLayout.addView(it) }
@@ -197,15 +215,19 @@ class PCKeyboardService : InputMethodService() {
         key: String,
         weight: Float,
         onClick: (() -> Unit)? = null,
-        bgColor: Int = Color.BLACK
+        nonSymbolButton: Boolean = false
     ) {
         val button = Button(this).apply {
             text = getKeyDisplayText(key)
             layoutParams = LayoutParams(0, 150, weight).apply {
                 setMargins(2, 2, 2, 2)
             }
-            background = buttonBackground.constantState?.newDrawable() ?: buttonBackground
+            background = when {
+                nonSymbolButton -> ContextCompat.getDrawable(context, R.drawable.rounded_button_dkgray)
+                else -> ContextCompat.getDrawable(context, R.drawable.rounded_button_black)
+            }
             setTextColor(Color.WHITE)
+
 
             // Обработчик обычного клика
             setOnClickListener {
@@ -221,12 +243,14 @@ class PCKeyboardService : InputMethodService() {
                 when {
                     onClick == ::handleBackspace -> {
                         isBackspaceLongPress = true
+                        backspaceLongPressWithCtrl = isCtrlPressed
                         handler.post(backspaceRunnable)
                         true
                     }
 
                     onClick == ::handleDelete -> {
                         isDelLongPress = true
+                        delLongPressWithCtrl = isCtrlPressed
                         handler.post(delRunnable)
                         true
                     }
@@ -252,7 +276,7 @@ class PCKeyboardService : InputMethodService() {
     }
 
     // Вспомогательная функция для кнопок-модификаторов
-    private fun addModifierButton(
+    private fun addModifierButton(              //Sht, Ctrl, Alt
         row: LinearLayout,
         text: String,
         weight: Float,
@@ -264,10 +288,11 @@ class PCKeyboardService : InputMethodService() {
             layoutParams = LayoutParams(0, 150, weight).apply {
                 setMargins(2, 2, 2, 2)
             }
-            background = resources.getDrawable(R.drawable.rounded_button, null)
-
-            val color = if (isActive) Color.DKGRAY else Color.BLACK
-            background.mutate().setTint(color)
+            background = ContextCompat.getDrawable(
+                context,
+                if (isActive) R.drawable.rounded_button_gray
+                else R.drawable.rounded_button_black
+            )
 
             setTextColor(Color.WHITE)
             setOnClickListener { onClick() }
@@ -376,7 +401,9 @@ class PCKeyboardService : InputMethodService() {
         } else {
             if (isCtrlPressed) {
                 deleteWordBeforeCursor()
-                resetModifiers()
+                if (!isBackspaceLongPress) {
+                    resetModifiers()
+                }
             } else {
                 ic.deleteSurroundingText(1, 0)
             }
@@ -425,7 +452,9 @@ class PCKeyboardService : InputMethodService() {
         } else {
             if (isCtrlPressed) {
                 deleteWordAfterCursor()
-                resetModifiers()
+                if (!isDelLongPress) {
+                    resetModifiers()
+                }
             } else {
                 ic.deleteSurroundingText(0, 1)
             }
@@ -484,7 +513,7 @@ class PCKeyboardService : InputMethodService() {
 
         //go at cursor to forward
         while (endIndex < textAfterCursor.length) {
-            if (!textAfterCursor[endIndex].isWhitespace()  && textAfterCursor[endIndex] !in punctuation) {
+            if (!textAfterCursor[endIndex].isWhitespace() && textAfterCursor[endIndex] !in punctuation) {
                 foundNonSpace = true
             } else if (foundNonSpace) {
                 break
