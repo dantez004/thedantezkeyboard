@@ -57,6 +57,7 @@ object Preferences {
     private const val KEY_GESTURE_SENSITIVITY = "gesture_sensitivity"
     private const val KEY_CURSOR_SPEED = "cursor_speed"
     private const val KEY_BUTTON_HEIGHT = "button_height"
+    private const val TATAR_TOGGLE = "tatar_toggle"
     fun getButtonHeight(context: Context): Int {
         val prefs = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
         return prefs.getInt(KEY_BUTTON_HEIGHT, 150)
@@ -123,5 +124,15 @@ object Preferences {
     fun setCursorSpeed(context: Context, speed: Int) {
         val prefs = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
         prefs.edit().putInt(KEY_CURSOR_SPEED, speed).apply()
+    }
+
+    fun getTatarToggle(context: Context): Boolean {
+        val tatar_toggle = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
+        return tatar_toggle.getBoolean(TATAR_TOGGLE, false)
+    }
+
+    fun setTatarToggle(context: Context, tatartoggle: Boolean) {
+        val tatar_toggle = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
+        tatar_toggle.edit().putBoolean(TATAR_TOGGLE, tatartoggle).apply()
     }
 }

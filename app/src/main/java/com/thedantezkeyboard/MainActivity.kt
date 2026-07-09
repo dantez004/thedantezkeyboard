@@ -214,7 +214,7 @@ fun ButtonsTab() {
     var showBS by remember { mutableStateOf(Preferences.isShowBS(context)) }
     var showENRU by remember { mutableStateOf(Preferences.isShowENRU(context)) }
     var buttonHeight by remember { mutableStateOf(Preferences.getButtonHeight(context).toFloat()) }
-
+    var tatarSymbols by remember { mutableStateOf(Preferences.getTatarToggle(context)) }
     Column(
         modifier = Modifier
             .padding(16.dp)
@@ -320,6 +320,13 @@ fun ButtonsTab() {
                 steps = 11,
                 modifier = Modifier.weight(2f)
             )
+        }
+        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(8.dp)) {
+            Text("tatar symbols: ${tatarSymbols}", modifier = Modifier.weight(1f))
+            Switch(checked = tatarSymbols, onCheckedChange = {
+                tatarSymbols = it
+                Preferences.setTatarToggle(context, it)
+            })
         }
     }
 }

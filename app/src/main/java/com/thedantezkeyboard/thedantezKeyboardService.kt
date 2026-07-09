@@ -55,6 +55,10 @@ class ThedantezKeyboardService : InputMethodService() {
         }
     }
 
+    override fun onEvaluateFullscreenMode(): Boolean {
+        return false
+    }
+
     private var isDelLongPress = false
     private var delLongPressWithCtrl = false
     private val delRunnable = object : Runnable {
@@ -175,6 +179,10 @@ class ThedantezKeyboardService : InputMethodService() {
 
     private fun getCursorSpeed(): Int {
         return Preferences.getCursorSpeed(this)
+    }
+
+    private fun getTatarToggle(): Boolean {
+        return Preferences.getTatarToggle(this)
     }
 
     private fun getKeyInputText(key: String): String {
@@ -866,294 +874,6 @@ class ThedantezKeyboardService : InputMethodService() {
         var movingCursor = false
         when {
             //комбинации | combinations
-//            isCtrlPressed && key == "z" -> {
-//                val now = System.currentTimeMillis()
-//                currentInputConnection?.sendKeyEvent(
-//                    KeyEvent(
-//                        now,
-//                        now,
-//                        KeyEvent.ACTION_DOWN,
-//                        KeyEvent.KEYCODE_CTRL_LEFT,
-//                        0,
-//                        0
-//                    )
-//                )
-//                currentInputConnection?.sendKeyEvent(
-//                    KeyEvent(
-//                        now,
-//                        now,
-//                        KeyEvent.ACTION_DOWN,
-//                        KeyEvent.KEYCODE_Z,
-//                        0,
-//                        KeyEvent.META_CTRL_ON
-//                    )
-//                )
-//                currentInputConnection?.sendKeyEvent(
-//                    KeyEvent(
-//                        now,
-//                        now,
-//                        KeyEvent.ACTION_UP,
-//                        KeyEvent.KEYCODE_Z,
-//                        0,
-//                        KeyEvent.META_CTRL_ON
-//                    )
-//                )
-//                currentInputConnection?.sendKeyEvent(
-//                    KeyEvent(
-//                        now,
-//                        now,
-//                        KeyEvent.ACTION_UP,
-//                        KeyEvent.KEYCODE_CTRL_LEFT,
-//                        0,
-//                        0
-//                    )
-//                )
-//            }
-//
-//            isCtrlPressed && key == "y" -> {
-//                val now = System.currentTimeMillis()
-//                currentInputConnection?.sendKeyEvent(
-//                    KeyEvent(
-//                        now,
-//                        now,
-//                        KeyEvent.ACTION_DOWN,
-//                        KeyEvent.KEYCODE_CTRL_LEFT,
-//                        0,
-//                        0
-//                    )
-//                )
-//                currentInputConnection?.sendKeyEvent(
-//                    KeyEvent(
-//                        now,
-//                        now,
-//                        KeyEvent.ACTION_DOWN,
-//                        KeyEvent.KEYCODE_Y,
-//                        0,
-//                        KeyEvent.META_CTRL_ON
-//                    )
-//                )
-//                currentInputConnection?.sendKeyEvent(
-//                    KeyEvent(
-//                        now,
-//                        now,
-//                        KeyEvent.ACTION_UP,
-//                        KeyEvent.KEYCODE_Y,
-//                        0,
-//                        KeyEvent.META_CTRL_ON
-//                    )
-//                )
-//                currentInputConnection?.sendKeyEvent(
-//                    KeyEvent(
-//                        now,
-//                        now,
-//                        KeyEvent.ACTION_UP,
-//                        KeyEvent.KEYCODE_CTRL_LEFT,
-//                        0,
-//                        0
-//                    )
-//                )
-//            }
-//
-//            isCtrlPressed && key == "c" -> {
-//                val now = System.currentTimeMillis()
-//                currentInputConnection?.sendKeyEvent(
-//                    KeyEvent(
-//                        now,
-//                        now,
-//                        KeyEvent.ACTION_DOWN,
-//                        KeyEvent.KEYCODE_CTRL_LEFT,
-//                        0,
-//                        0
-//                    )
-//                )
-//                currentInputConnection?.sendKeyEvent(
-//                    KeyEvent(
-//                        now,
-//                        now,
-//                        KeyEvent.ACTION_DOWN,
-//                        KeyEvent.KEYCODE_C,
-//                        0,
-//                        KeyEvent.META_CTRL_ON
-//                    )
-//                )
-//                currentInputConnection?.sendKeyEvent(
-//                    KeyEvent(
-//                        now,
-//                        now,
-//                        KeyEvent.ACTION_UP,
-//                        KeyEvent.KEYCODE_C,
-//                        0,
-//                        KeyEvent.META_CTRL_ON
-//                    )
-//                )
-//                currentInputConnection?.sendKeyEvent(
-//                    KeyEvent(
-//                        now,
-//                        now,
-//                        KeyEvent.ACTION_UP,
-//                        KeyEvent.KEYCODE_CTRL_LEFT,
-//                        0,
-//                        0
-//                    )
-//                )
-//            }
-//
-//            isCtrlPressed && key == "v" -> {
-//                val now = System.currentTimeMillis()
-//                currentInputConnection?.sendKeyEvent(
-//                    KeyEvent(
-//                        now,
-//                        now,
-//                        KeyEvent.ACTION_DOWN,
-//                        KeyEvent.KEYCODE_CTRL_LEFT,
-//                        0,
-//                        0
-//                    )
-//                )
-//                currentInputConnection?.sendKeyEvent(
-//                    KeyEvent(
-//                        now,
-//                        now,
-//                        KeyEvent.ACTION_DOWN,
-//                        KeyEvent.KEYCODE_V,
-//                        0,
-//                        KeyEvent.META_CTRL_ON
-//                    )
-//                )
-//                currentInputConnection?.sendKeyEvent(
-//                    KeyEvent(
-//                        now,
-//                        now,
-//                        KeyEvent.ACTION_UP,
-//                        KeyEvent.KEYCODE_V,
-//                        0,
-//                        KeyEvent.META_CTRL_ON
-//                    )
-//                )
-//                currentInputConnection?.sendKeyEvent(
-//                    KeyEvent(
-//                        now,
-//                        now,
-//                        KeyEvent.ACTION_UP,
-//                        KeyEvent.KEYCODE_CTRL_LEFT,
-//                        0,
-//                        0
-//                    )
-//                )
-//            }
-//
-//            isCtrlPressed && key == "x" -> {
-//                val now = System.currentTimeMillis()
-//                currentInputConnection?.sendKeyEvent(
-//                    KeyEvent(
-//                        now,
-//                        now,
-//                        KeyEvent.ACTION_DOWN,
-//                        KeyEvent.KEYCODE_CTRL_LEFT,
-//                        0,
-//                        0
-//                    )
-//                )
-//                currentInputConnection?.sendKeyEvent(
-//                    KeyEvent(
-//                        now,
-//                        now,
-//                        KeyEvent.ACTION_DOWN,
-//                        KeyEvent.KEYCODE_X,
-//                        0,
-//                        KeyEvent.META_CTRL_ON
-//                    )
-//                )
-//                currentInputConnection?.sendKeyEvent(
-//                    KeyEvent(
-//                        now,
-//                        now,
-//                        KeyEvent.ACTION_UP,
-//                        KeyEvent.KEYCODE_X,
-//                        0,
-//                        KeyEvent.META_CTRL_ON
-//                    )
-//                )
-//                currentInputConnection?.sendKeyEvent(
-//                    KeyEvent(
-//                        now,
-//                        now,
-//                        KeyEvent.ACTION_UP,
-//                        KeyEvent.KEYCODE_CTRL_LEFT,
-//                        0,
-//                        0
-//                    )
-//                )
-//            }
-//
-//            isCtrlPressed && key == "a" -> {
-//                val now = System.currentTimeMillis()
-//                currentInputConnection?.sendKeyEvent(
-//                    KeyEvent(
-//                        now,
-//                        now,
-//                        KeyEvent.ACTION_DOWN,
-//                        KeyEvent.KEYCODE_CTRL_LEFT,
-//                        0,
-//                        0
-//                    )
-//                )
-//                currentInputConnection?.sendKeyEvent(
-//                    KeyEvent(
-//                        now,
-//                        now,
-//                        KeyEvent.ACTION_DOWN,
-//                        KeyEvent.KEYCODE_A,
-//                        0,
-//                        KeyEvent.META_CTRL_ON
-//                    )
-//                )
-//                currentInputConnection?.sendKeyEvent(
-//                    KeyEvent(
-//                        now,
-//                        now,
-//                        KeyEvent.ACTION_UP,
-//                        KeyEvent.KEYCODE_A,
-//                        0,
-//                        KeyEvent.META_CTRL_ON
-//                    )
-//                )
-//                currentInputConnection?.sendKeyEvent(
-//                    KeyEvent(
-//                        now,
-//                        now,
-//                        KeyEvent.ACTION_UP,
-//                        KeyEvent.KEYCODE_CTRL_LEFT,
-//                        0,
-//                        0
-//                    )
-//                )
-//            }
-//
-//            isAltPressed && key == "t" -> rulangSendTextYo()
-//            isCtrlPressed && key == "t" -> {
-//                val now = System.currentTimeMillis()
-//                currentInputConnection?.sendKeyEvent(
-//                    KeyEvent(
-//                        now,
-//                        now,
-//                        KeyEvent.ACTION_DOWN,
-//                        KeyEvent.KEYCODE_TAB,
-//                        0,
-//                        0
-//                    )
-//                )
-//                currentInputConnection?.sendKeyEvent(
-//                    KeyEvent(
-//                        now,
-//                        now,
-//                        KeyEvent.ACTION_UP,
-//                        KeyEvent.KEYCODE_TAB,
-//                        0,
-//                        0
-//                    )
-//                )
-//            }
 
             isCtrlPressed && key == "-" -> {
                 moveCursorText(false)
@@ -1181,6 +901,54 @@ class ThedantezKeyboardService : InputMethodService() {
 
             isAltPressed && key == "'" -> {
                 sendText("`")
+            }
+
+            isAltPressed && key == "y" && getTatarToggle() -> {
+                if (isShiftPressed || isCapsLock) {
+                    sendText("Ң")
+                } else {
+                    sendText("ң")
+                }
+            }
+
+            isAltPressed && key == "j" && getTatarToggle() -> {
+                if (isShiftPressed || isCapsLock) {
+                    sendText("Ө")
+                } else {
+                    sendText("ө")
+                }
+            }
+
+            isAltPressed && key == "f" && getTatarToggle() -> {
+                if (isShiftPressed || isCapsLock) {
+                    sendText("Ә")
+                } else {
+                    sendText("ә")
+                }
+            }
+
+            isAltPressed && key == "e" && getTatarToggle() -> {
+                if (isShiftPressed || isCapsLock) {
+                    sendText("Ү")
+                } else {
+                    sendText("ү")
+                }
+            }
+
+            isAltPressed && key == ";" && getTatarToggle() -> {
+                if (isShiftPressed || isCapsLock) {
+                    sendText("Җ")
+                } else {
+                    sendText("җ")
+                }
+            }
+
+            isAltPressed && key == "[" && getTatarToggle() -> {
+                if (isShiftPressed || isCapsLock) {
+                    sendText("Һ")
+                } else {
+                    sendText("һ")
+                }
             }
 
             (isCtrlPressed || isAltPressed) && key.matches(Regex("[a-zA-Z0-9]")) -> {
